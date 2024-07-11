@@ -3,7 +3,6 @@ from ql import QLAgent
 
 if __name__ == "__main__":
 
-    print("urmom")
     env = gym.make("Taxi-v3").env
     play_env = gym.make("Taxi-v3", render_mode = "human").env
     agent = QLAgent(env, play_env)
