@@ -74,9 +74,11 @@ class DQN(nn.Module):
 
 class DQLAgent:
 
-    def __init__(self, env,BATCH_SIZE = 128, GAMMA = 0.99, EPS_START = 0.9, 
+    def __init__(self, env, play_env, BATCH_SIZE = 128, GAMMA = 0.99, EPS_START = 0.9, 
               EPS_END = 0.05, EPS_DECAY = 1000, TAU = 0.005, LR = 1e-4):
         self.env = env
+        self.play_env = play_env
+
         self.BATCH_SIZE = BATCH_SIZE
         self.GAMMA = GAMMA
         self.EPS_START = EPS_START
@@ -243,4 +245,43 @@ class DQLAgent:
         print('Complete')
         self.plot_durations(show_result=True)
         plt.ioff()
+        plt.show()
+
+    def play(self, max_iters = 300):
+        
+         #get initial state 
+        cState, _  = self.play_env.reset()
+        cState = torch.tensor(cState, dtype=torch.float32, device=device).unsqueeze(0)
+
+        #render
+        rewards = []
+
+        for _ in range(max_iters):
+
+            with torch.no_grad():
+                # t.max(1) will return the largest column value of each row.
+                # second column on max result is index of where max element was
+                # found, so we pick action with the larger expected reward.
+                bestaction = self.policy_net(cState).max(1).indices.view(1, 1)
+
+            observation, reward, terminated, truncated, _ = self.play_env.step(bestaction.item())
+            if terminated:
+                next_state = None
+            else:
+                next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+
+            cState = next_state
+
+            rewards.append(reward)
+
+            #frame = self.play_env.render() show simulation
+            self.play_env.render()
+
+            #frames.append(frame)
+            done = terminated or truncated
+            if done == True:
+                break
+
+        print(rewards)
+        plt.plot(rewards)
         plt.show()
